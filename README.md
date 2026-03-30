@@ -30,12 +30,14 @@ This project involved developing a comprehensive Power BI solution for an HVAC c
   - Zero-Revenue Volume: Audited over 16.5k tickets to find that the median revenue per ticket was $0, highlighting a heavy lean toward "reactive" repair work.
 
 **2. Market Expansion Logic (The Three Pillars)**
-  I developed a proprietary Expansion Score to evaluate new territories based on:
+
+I developed a proprietary Expansion Score to evaluate new territories based on:
   1. Financial Health: Affordability metrics including Median Household Income and Unemployment.
   2. Serviceable Housing: Density of owner-occupied, single-unit residential rooftops.
   3. The "15-Year Death Window": A specialized growth metric targeting homes built between 2000–2009, where AC units are statistically likely to require full replacement.
 
 **3. Performance-Based Segmentation**
+
 Using a consolidated 0-100 score, ZIP codes were categorized to dictate strategy:
   - Top Performing (e.g., 70124): High market potential with "Up" revenue trends; recommended for sales model replication.
   - Underperforming: Areas with "Down" trends requiring immediate audit of lead follow-ups and staffing.
@@ -44,13 +46,14 @@ Using a consolidated 0-100 score, ZIP codes were categorized to dictate strategy
 ---
 
 ### **🛠 Technical Workflow**
-**1. Data Integrity & Cleaning
+**1. Data Integrity & Cleaning**
 
   - Temporal Auditing: Purged records where "Completion Date" preceded "Created Date" to ensure accurate velocity metrics.
   - Logic-Based Retention: Navigated inconsistent sales datasets by cross-referencing surrounding data points to maintain record integrity rather than outright deletion.
   - Optimization: Simplified complex measures to improve dashboard rendering speed and end-user responsiveness.
 
 **2. Data Transformation (Power Query)**
+
 To ensure high performance, I prioritized data shaping within Power Query rather than relying solely on DAX.
   - Efficient Extraction: Streamlined the ingestion of messy Excel workbooks containing population and income estimates.
   - Calculated Columns: Used Power Query for static attributes (e.g., geographic grouping) to reduce the memory footprint of the .pbix file.
@@ -59,18 +62,20 @@ To ensure high performance, I prioritized data shaping within Power Query rather
 <img width="1688" height="639" alt="image" src="https://github.com/user-attachments/assets/88502c3b-2750-4640-80ac-90e0c1b9c5b3" />
 
 **3. Data Modeling & DAX**
+
 The model follows a Star Schema design to support complex time-intelligence and ranking calculations.
-  - Measures vs. Columns: Utilized DAX measures for dynamic calculations like Income Rank and Market Penetration %,       ensuring they react correctly to slicers.
+  - Measures vs. Columns: Utilized DAX measures for dynamic calculations like Income Rank and Market Penetration %, ensuring they react correctly to slicers.
   - Scoring Logic: Wrote DAX expressions to weight different KPIs, providing a single "Opportunity Score" for each territory.
 
 **4. Visualization & UX**
+
 The dashboard was designed with Strategic Advisors in mind, focusing on high-level KPIs and drill-down capabilities.
   - Strategic Framework: Integrated metrics specifically tuned for expansion-focused business analysis.
   - Geospatial Analysis: Used zip code mapping to visualize financial performance and market density across service areas.
 
 ---
 
-### 💻** Tools & Technologies**
+### 💻 **Tools & Technologies**
 Power BI Desktop: Lead visualization and modeling tool.
 Power Query (M): Used for ETL (Extract, Transform, Load) processes.
 DAX: Used for advanced statistical scoring and ranking.
