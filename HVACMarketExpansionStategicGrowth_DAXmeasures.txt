@@ -1,0 +1,362 @@
+DEFINE 
+---- MODEL MEASURES BEGIN ----
+MEASURE '1_time&measures'[averev/customer] = AVERAGEX(
+    VALUES('2_cardone_details'[customername]), 
+    CALCULATE(SUM('2_cardone_details'[rev])))
+MEASURE '1_time&measures'[averev/customer_%diff.figure] = 
+VAR Difference = [averev/customer] - [averev/customer_global]
+RETURN 
+DIVIDE(Difference, [averev/customer_global], 0)
+MEASURE '1_time&measures'[averev/customer_%diff.results] = 
+VAR CurrentAve = [averev/customer]
+VAR GlobalAve = [averev/customer_global]
+VAR Difference = CurrentAve - GlobalAve
+VAR Percentage = DIVIDE(Difference, GlobalAve)
+RETURN
+IF(Difference >0, 
+    "▲ " & FORMAT(Percentage, "0%") & " Above Portfolio Average",
+    IF(Difference <0,
+        "▼ " & FORMAT(Percentage, "0%") & " Below Portfolio Average",
+        ""
+    )
+)
+
+MEASURE '1_time&measures'[averev/customer_global] = CALCULATE([averev/customer], ALL('2_cardone_details'))
+MEASURE '1_time&measures'[averev/customer_rank.filter] = 
+VAR CurrentRank = 
+    RANKX(
+        ALLSELECTED('3_grouped_zip'[loc.place name]), 
+        [averev/customer], , DESC)
+RETURN
+IF(CurrentRank <= 3, [averev/customer], BLANK())
+MEASURE '1_time&measures'[averev/ticket] = AVERAGE('2_cardone_details'[rev])
+MEASURE '1_time&measures'[averev/ticket_%diff.figure] = 
+VAR Difference = [averev/ticket] - [averev/ticket_global]
+RETURN 
+DIVIDE(Difference, [averev/ticket_global], 0)
+MEASURE '1_time&measures'[averev/ticket_%diff.results] = 
+VAR CurrentAve = [averev/ticket]
+VAR GlobalAve = [averev/ticket_global]
+VAR Difference = CurrentAve - GlobalAve
+VAR Percentage = DIVIDE(Difference, GlobalAve)
+RETURN
+IF(Difference >0, 
+    "▲ " & FORMAT(Percentage, "0%") & " Above Portfolio Average",
+    IF(Difference <0,
+        "▼ " & FORMAT(Percentage, "0%") & " Below Portfolio Average",
+        ""
+    )
+)
+MEASURE '1_time&measures'[averev/ticket_global] = CALCULATE([averev/ticket], ALL('2_cardone_details'))
+MEASURE '1_time&measures'[averev/ticket_rank] = 
+RANKX(
+    ALLSELECTED('3_grouped_zip'[loc.place name]), 
+    [averev/ticket], , DESC
+)
+MEASURE '1_time&measures'[averev/ticket_rank.filter] = IF([averev/ticket_rank]<=3, [averev/ticket],BLANK())
+MEASURE '1_time&measures'[customercount_%globalunique] = VAR CurrentCustomer = [customercount_unique]
+VAR GlobalCustomer = CALCULATE([customercount_unique], ALL('2_cardone_details'))
+RETURN
+DIVIDE(CurrentCustomer, GlobalCustomer)
+MEASURE '1_time&measures'[customercount_%repeat] = 
+VAR RepeatCustomerCount = 
+    COUNTROWS(
+        FILTER(
+            VALUES('2_cardone_details'[customername]), 
+            CALCULATE(COUNT('2_cardone_details'[invoiceID])) > 1
+        )
+    )
+VAR TotalUniqueCustomers = [customercount_unique]
+
+RETURN
+DIVIDE(RepeatCustomerCount, TotalUniqueCustomers, 0)
+MEASURE '1_time&measures'[customercount_globalunique] = CALCULATE([customercount_unique], ALL('2_cardone_details'))
+MEASURE '1_time&measures'[customercount_repeat] = 
+COUNTROWS(
+    FILTER(
+        VALUES('2_cardone_details'[customername]), 
+        CALCULATE(COUNT('2_cardone_details'[invoiceID])) > 1
+    )
+)
+MEASURE '1_time&measures'[customercount_unique] = DISTINCTCOUNT('2_cardone_details'[customername])
+MEASURE '1_time&measures'[customercount_unique_rank.filter] = 
+VAR CurrentRank = 
+    RANKX(
+        ALLSELECTED('3_grouped_zip'[loc.place name]), 
+        [customercount_unique], , DESC)
+RETURN
+IF(CurrentRank <= 3, [customercount_unique], BLANK())
+MEASURE '1_time&measures'[days/ticket] = 
+AVERAGEX(
+    '2_cardone_details',
+    DATEDIFF(
+        '2_cardone_details'[date_create],
+        '2_cardone_details'[date_competion],
+        DAY
+    )
+)
+MEASURE '1_time&measures'[hh_marketshare] = 
+DIVIDE(
+    [customercount_unique],
+    SUM('3_grouped_zip'[yy_DP04.owneroccuphouses])
+)
+MEASURE '1_time&measures'[hh_marketshare_score] = 
+VAR CurrentShare = [hh_marketshare]
+VAR MaxShare = 
+    CALCULATE (
+        MAXX(ALL('3_grouped_zip'), [hh_marketshare]),
+        '3_grouped_zip'[cardone_details.check_existingarea]="yes"
+    )
+
+RETURN
+DIVIDE(CurrentShare, MaxShare) * 100
+MEASURE '1_time&measures'[internalstrategy_score] = 
+VAR ValueScore = [medianrev_score]
+VAR ShareScore = [hh_marketshare_score]
+VAR MomentumScore = [revenuetrend_score]
+RETURN
+(ValueScore + ShareScore + MomentumScore) / 3
+MEASURE '1_time&measures'[internalstrategytotal_overallscore] = 
+IF(
+    HASONEVALUE('3_grouped_zip'[loc.postal code]),
+    [internalstrategytotal_score],
+    AVERAGEX(
+        KEEPFILTERS(VALUES('3_grouped_zip'[loc.postal code])),
+        [internalstrategytotal_score]
+    )
+)
+MEASURE '1_time&measures'[internalstrategytotal_score] = 
+([internalstrategy_score] * 0.75) + 
+(SELECTEDVALUE('3_grouped_zip'[expansion_score]) * 0.25)
+MEASURE '1_time&measures'[LastUpdateCard] = 
+"Data Refreshed: " & FORMAT(SELECTEDVALUE('1_time&measures'[NYC_Timestamp]), "MMM dd, yyyy | hh:mm AM/PM") & " EST"
+MEASURE '1_time&measures'[medianrev/customer] = MEDIANX(
+    VALUES('2_cardone_details'[customername]), 
+    CALCULATE(SUM('2_cardone_details'[rev]))
+)
+MEASURE '1_time&measures'[medianrev/customer_%diff.figure] = 
+VAR Difference = [medianrev/customer] - [medianrev/customer_global]
+RETURN 
+DIVIDE(Difference, [medianrev/customer_global], 0)
+MEASURE '1_time&measures'[medianrev/customer_%diff.results] = 
+VAR CurrentMed = [medianrev/customer]
+VAR GlobalMed = [medianrev/customer_global]
+VAR Difference = CurrentMed - GlobalMed
+VAR Percentage = DIVIDE(Difference, GlobalMed)
+RETURN
+IF([medianrev/customer_%diff.figure] >0, 
+    "▲ " & FORMAT(Percentage, "0%") & " Portfolio Median",
+    IF([medianrev/customer_%diff.figure] <0,
+        "▼ " & FORMAT(Percentage, "0%") & " Portfolio Median",
+        ""
+    )
+)
+MEASURE '1_time&measures'[medianrev/customer_global] = CALCULATE([medianrev/customer], ALL('2_cardone_details'))
+MEASURE '1_time&measures'[medianrev/customer_rank.filter] = 
+VAR CurrentRank = 
+    RANKX(
+        ALLSELECTED('3_grouped_zip'[loc.place name]), 
+        [medianrev/customer], , DESC)
+RETURN
+IF(CurrentRank <= 3, [medianrev/customer], BLANK())
+MEASURE '1_time&measures'[medianrev/ticket] = MEDIAN('2_cardone_details'[rev])
+MEASURE '1_time&measures'[medianrev/ticket_%diff.figure] = 
+VAR Difference = [medianrev/ticket] - [medianrev/ticket_global]
+RETURN 
+DIVIDE(Difference, [medianrev/ticket_global], 0)
+MEASURE '1_time&measures'[medianrev/ticket_%diff.results] = 
+VAR CurrentMed = [medianrev/ticket]
+VAR GlobalMed = [medianrev/ticket_global]
+VAR Difference = CurrentMed - GlobalMed
+VAR Percentage = DIVIDE(Difference, GlobalMed)
+RETURN
+IF(Difference >0, 
+    "▲ " & FORMAT(Percentage, "0%") & " Portfolio Median",
+    IF(Difference <0,
+        "▼ " & FORMAT(Percentage, "0%") & " Portfolio Median",
+        ""
+    )
+)
+MEASURE '1_time&measures'[medianrev/ticket_global] = CALCULATE([medianrev/ticket], ALL('2_cardone_details'))
+MEASURE '1_time&measures'[medianrev/ticket_rank] = 
+RANKX(
+    ALLSELECTED('3_grouped_zip'[loc.place name]), 
+    [medianrev/ticket], , DESC
+)
+MEASURE '1_time&measures'[medianrev/ticket_rank.filter] = IF([medianrev/ticket_rank]<=3, [medianrev/ticket],BLANK())
+MEASURE '1_time&measures'[medianrev_score] = 
+VAR ZipMedian = [medianrev/customer]
+VAR GlobalMedian = 
+    CALCULATE(
+        [medianrev/customer_global],
+        ALL('2_cardone_details'),
+        '3_grouped_zip'[cardone_details.check_existingarea]="yes"
+    )
+
+VAR RawScore = DIVIDE(ZipMedian, GlobalMedian) * 50
+
+RETURN 
+IF(RawScore > 100, 100, RawScore)
+MEASURE '1_time&measures'[p1_rankorder] = 
+IF(
+    ISBLANK(SUM('3_grouped_zip'[p1_score])), 
+    BLANK(),
+    RANKX(
+        ALLSELECTED('3_grouped_zip'), 
+        CALCULATE(SUM('3_grouped_zip'[p1_score])), 
+        , 
+        DESC, 
+        Dense
+    )
+)
+MEASURE '1_time&measures'[p2_rankorder] = 
+IF(
+    ISBLANK(SUM('3_grouped_zip'[p2_score])), 
+    BLANK(),
+    RANKX(
+        ALLSELECTED('3_grouped_zip'), 
+        CALCULATE(SUM('3_grouped_zip'[p2_score])), 
+        , 
+        DESC, 
+        Dense
+    )
+)
+MEASURE '1_time&measures'[p3_rankorder] = 
+IF(
+    ISBLANK(SUM('3_grouped_zip'[p3_score])), 
+    BLANK(),
+    RANKX(
+        ALLSELECTED('3_grouped_zip'), 
+        CALCULATE(SUM('3_grouped_zip'[p3_score])), 
+        , 
+        DESC, 
+        Dense
+    )
+)
+MEASURE '1_time&measures'[pp_rankorder] = 
+IF(
+    ISBLANK(SUM('3_grouped_zip'[expansion_score])), 
+    BLANK(),
+    RANKX(
+        ALLSELECTED('3_grouped_zip'), 
+        CALCULATE(SUM('3_grouped_zip'[expansion_score])), 
+        , 
+        DESC, 
+        Dense
+    )
+)
+MEASURE '1_time&measures'[rank_city.filter] = 
+VAR CurrentRank = 
+    RANKX(
+        ALLSELECTED('3_grouped_zip'[loc.place name]), 
+        [rev_sum], , DESC)
+RETURN
+IF(CurrentRank <= 3, [rev_sum], BLANK())
+
+MEASURE '1_time&measures'[rev_%global] = VAR CurrentRevenue = [rev_sum]
+VAR GlobalRevenue = CALCULATE([rev_sum], ALL('2_cardone_details'))
+RETURN
+DIVIDE(CurrentRevenue, GlobalRevenue)
+MEASURE '1_time&measures'[rev_globalsum] = CALCULATE([rev_sum], ALL('2_cardone_details'))
+MEASURE '1_time&measures'[rev_sum] = SUM('2_cardone_details'[rev])
+MEASURE '1_time&measures'[rev_sum/date] = DIVIDE([rev_sum],[days/ticket])
+MEASURE '1_time&measures'[revenuetrend] = 
+VAR SixMonthWindow = 
+    DATESINPERIOD(
+        '2_cardone_details'[date_invoice], 
+        MAX('2_cardone_details'[date_invoice]), 
+        -6, 
+        MONTH
+    )
+VAR MonthlyData = 
+    FILTER(
+        SUMMARIZE(
+            CALCULATETABLE('2_cardone_details', SixMonthWindow),
+            '2_cardone_details'[date_invoice],
+            "MonthlyRev", [rev_sum]
+        ),
+        [MonthlyRev] > 0
+    )
+VAR StartRev = MINX(TOPN(1, MonthlyData, '2_cardone_details'[date_invoice], ASC), [MonthlyRev])
+VAR EndRev = MINX(TOPN(1, MonthlyData, '2_cardone_details'[date_invoice], DESC), [MonthlyRev])
+VAR MonthCount = COUNTROWS(MonthlyData)
+
+RETURN
+IF(MonthCount < 2, "New/Intermittent",
+    VAR Growth = DIVIDE(EndRev - StartRev, StartRev)
+    RETURN
+    SWITCH(TRUE(),
+        Growth > 0.05, "Up ▲",
+        Growth < -0.05, "Down ▼",
+        "Steady ▬"
+    )
+)
+MEASURE '1_time&measures'[revenuetrend_score] = 
+VAR SixMonthWindow = DATESINPERIOD('2_cardone_details'[date_invoice], MAX('2_cardone_details'[date_invoice]), -6, MONTH)
+
+VAR MonthlyData = 
+    FILTER(
+        SUMMARIZE(
+            CALCULATETABLE(
+                '2_cardone_details', 
+                SixMonthWindow,
+                '3_grouped_zip'[cardone_details.check_existingarea]="yes"
+            ),
+            '2_cardone_details'[date_invoice],
+            "MonthlyRev", [rev_sum]
+        ),
+        [MonthlyRev] > 0
+    )
+
+VAR StartRev = MINX(TOPN(1, MonthlyData, '2_cardone_details'[date_invoice], ASC), [MonthlyRev])
+VAR EndRev = MINX(TOPN(1, MonthlyData, '2_cardone_details'[date_invoice], DESC), [MonthlyRev])
+VAR MonthCount = COUNTROWS(MonthlyData)
+
+RETURN
+IF(MonthCount < 2, 50, -- Default to neutral for new markets
+    VAR GrowthRate = DIVIDE(EndRev - StartRev, StartRev)
+    
+    -- Normalization Logic: 
+    -- 0% growth = 50 points
+    -- +20% growth = 100 points
+    -- -20% growth = 0 points
+    VAR NormalizedScore = 50 + (GrowthRate * 250) 
+    
+    RETURN
+    MIN(MAX(NormalizedScore, 0), 100) -- Ensures score stays between 0 and 100
+)
+MEASURE '1_time&measures'[ticketcount_%globalunique] = 
+VAR CurrentTickets = COUNTROWS('2_cardone_details')
+VAR GlobalTickets = [ticketcount_global]
+RETURN
+DIVIDE(CurrentTickets, GlobalTickets)
+MEASURE '1_time&measures'[ticketcount_global] = CALCULATE(COUNTROWS('2_cardone_details'), ALL('2_cardone_details'))
+MEASURE '1_time&measures'[TopPerforming.Internal_rank] = 
+RANKX(
+    ALLSELECTED('3_grouped_zip'[loc.postal code]), 
+    [internalstrategytotal_score], , DESC
+)
+MEASURE '1_time&measures'[TopPerforming.Internal_rankfilter] = IF([TopPerforming.Internal_rank]<=3, [internalstrategytotal_score],BLANK())
+MEASURE '1_time&measures'[total_globalmedian] = 
+CALCULATE(
+    MEDIANX(
+        FILTER(
+            '2_cardone_details', 
+            '2_cardone_details'[rev] > 0
+        ),
+        '2_cardone_details'[rev]
+    ),
+    ALLSELECTED('2_cardone_details')
+)
+MEASURE '1_time&measures'[yearreference] = 
+VAR StartYear = MIN('2_cardone_details'[date_invoice].[Year])
+VAR EndYear = MAX('2_cardone_details'[date_invoice].[Year])
+
+RETURN
+IF(
+    StartYear = EndYear,
+    FORMAT(StartYear, "0"), -- If only one year exists
+    FORMAT(StartYear, "0") & " - " & FORMAT(EndYear, "0")
+)
+---- MODEL MEASURES END ----
+
